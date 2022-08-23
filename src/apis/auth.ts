@@ -138,46 +138,7 @@ const passwordreset = async (req: Request, res: Response) => {
     }
 };
 
-// Gmail Auth
-const glogin = async (req: Request, res: Response) => {
-    try {
-        const { token } = req.body;
-        console.log(token);
-        const ticket = await googleClient.verifyIdToken({
-            idToken: token,
-            audience: process.env.OAUTH_CLIENTID,
-        });
-
-        const payload = ticket.getPayload();
-
-        var user: any = await controllers.Auth.find({
-            filter: { email: payload?.email },
-        });
-
-        if (!user) {
-            user = await controllers.Auth.create({
-                name: payload?.name,
-                email: payload?.email,
-                password: "",
-                verify: true,
-            });
-        }
-
-        const jwtToken = jwt.sign(
-            { user_id: user._id, email: payload?.email },
-            String(process.env.TOKEN_KEY),
-            {
-                expiresIn: "2h",
-            }
-        );
-
-        res.status(200).json({ token: jwtToken });
-    } catch (err: any) {
-        console.log("glogin error", err.message);
-        res.status(500).send(err.message);
-    }
-};
-
+// Hanlde confirm mail
 const handleverify = async (req: Request, res: Response) => {
     try {
         const user = await controllers.Auth.fintById({ param: req.params.userId });
@@ -227,6 +188,46 @@ const handlereset = async (req: Request, res: Response) => {
         res.status(500).send(err.message);
     }
 }
+
+// Gmail Auth
+const glogin = async (req: Request, res: Response) => {
+    try {
+        const { token } = req.body;
+        console.log(token);
+        const ticket = await googleClient.verifyIdToken({
+            idToken: token,
+            audience: process.env.OAUTH_CLIENTID,
+        });
+
+        const payload = ticket.getPayload();
+
+        var user: any = await controllers.Auth.find({
+            filter: { email: payload?.email },
+        });
+
+        if (!user) {
+            user = await controllers.Auth.create({
+                name: payload?.name,
+                email: payload?.email,
+                password: "",
+                verify: true,
+            });
+        }
+
+        const jwtToken = jwt.sign(
+            { user_id: user._id, email: payload?.email },
+            String(process.env.TOKEN_KEY),
+            {
+                expiresIn: "2h",
+            }
+        );
+
+        res.status(200).json({ token: jwtToken });
+    } catch (err: any) {
+        console.log("glogin error", err.message);
+        res.status(500).send(err.message);
+    }
+};
 
 // Middleware
 const middleware = async (req: any, res: Response, next: NextFunction) => {
